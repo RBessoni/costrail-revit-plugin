@@ -18,7 +18,7 @@ internal sealed class RevitExternalApplication : IExternalApplication
   private IDisposable? _disposableLogger;
 
   // POC: move to somewhere central?
-  public static readonly DockablePaneId DockablePanelId = new(new Guid("{f7b5da7c-366c-4b13-8455-b56f433f461e}"));
+  public static readonly DockablePaneId DockablePanelId = new(new Guid("{8b926740-b62f-475a-a8a6-61c9472b7ede}"));
 
   private static HostAppVersion GetVersion()
   {

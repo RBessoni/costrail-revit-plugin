@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,8 @@ namespace Speckle.Connectors.Revit.Plugin;
 
 public sealed partial class RevitControlWebView : UserControl, IBrowserScriptExecutor, IDisposable
 {
+  private const string UI_VIRTUAL_HOST = "bimcost.app";
+
   private readonly IServiceProvider _serviceProvider;
 #pragma warning disable CA2213
   private WebView2? _browser;
@@ -46,7 +49,6 @@ public sealed partial class RevitControlWebView : UserControl, IBrowserScriptExe
       CreationProperties = new CoreWebView2CreationProperties { UserDataFolder = "C:\\temp" },
       HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
       VerticalAlignment = System.Windows.VerticalAlignment.Stretch,
-      Source = DuiUrl,
     };
 
     _browser.CoreWebView2InitializationCompleted += (sender, args) =>
@@ -55,6 +57,11 @@ public sealed partial class RevitControlWebView : UserControl, IBrowserScriptExe
         .CatchUnhandled(() => OnInitialized(sender, args));
 
     BrowserContainer.Child = _browser;
+
+    // Source is deliberately not set here. The bundled UI is served from a virtual
+    // host that can only be registered once CoreWebView2 exists, so navigation is
+    // deferred to OnInitialized. Without a Source, initialization must be explicit.
+    _ = _browser.EnsureCoreWebView2Async();
   }
 
   public bool IsBrowserInitialized => _browser?.IsInitialized ?? false;
@@ -109,11 +116,42 @@ public sealed partial class RevitControlWebView : UserControl, IBrowserScriptExe
     {
       SetupBinding(binding);
     }
+
+    // Bindings must be registered before the page loads, so the host objects are
+    // already available to the UI on first script execution.
+    MapBundledUi();
+    _browser!.CoreWebView2.Navigate(DuiUrl.AbsoluteUri);
   }
 
   /// <remark>
   /// This must be called on the Main thread
   /// </remark>
+  /// <summary>
+  /// Maps the UI shipped next to the assembly onto the virtual host so it is served from a
+  /// real https origin instead of file://, which keeps history routing and fetch working.
+  /// Skipped when the folder is absent, i.e. when a hosted UI is configured via SPECKLE_DUI_URL.
+  /// </summary>
+  private void MapBundledUi()
+  {
+    var assemblyDir = Path.GetDirectoryName(typeof(RevitControlWebView).Assembly.Location);
+    if (assemblyDir is null)
+    {
+      return;
+    }
+
+    var uiRoot = Path.Combine(assemblyDir, "ui");
+    if (!Directory.Exists(uiRoot))
+    {
+      return;
+    }
+
+    _browser!.CoreWebView2.SetVirtualHostNameToFolderMapping(
+      UI_VIRTUAL_HOST,
+      uiRoot,
+      CoreWebView2HostResourceAccessKind.Allow
+    );
+  }
+
   private void SetupBinding(IBinding binding)
   {
     binding.Parent.AssociateWithBinding(binding);

@@ -49,7 +49,7 @@ internal sealed class RevitWebViewPlugin(
     var dui3Button = (PushButton)
       specklePanel.AddItem(
         new PushButtonData(
-          "Speckle for Revit",
+          "BIM Cost for Revit",
           Connector.TabTitle,
           typeof(RevitExternalApplication).Assembly.Location,
           typeof(SpeckleRevitCommand).FullName
@@ -69,9 +69,9 @@ internal sealed class RevitWebViewPlugin(
       $"Speckle.Connectors.Revit{speckleApplication.HostApplicationVersion}.Assets.logo32.png",
       path
     );
-    dui3Button.ToolTip = "Speckle for Revit";
+    dui3Button.ToolTip = "BIM Cost for Revit";
     //dui3Button.AvailabilityClassName = typeof(CmdAvailabilityViews).FullName;
-    dui3Button.SetContextualHelp(new ContextualHelp(ContextualHelpType.Url, "https://speckle.systems"));
+    // Contextual help omitted until BIM Cost docs have a public URL.
   }
 
   private void OnApplicationInitialized(object? sender, Autodesk.Revit.DB.Events.ApplicationInitializedEventArgs e)

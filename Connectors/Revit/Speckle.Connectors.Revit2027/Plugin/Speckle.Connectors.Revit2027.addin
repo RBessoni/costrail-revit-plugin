@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <RevitAddIns>
   <AddIn Type="Application">
-    <Name>Speckle for Revit</Name>
-    <Description>Speckle for Revit</Description>
+    <Name>BIM Cost for Revit</Name>
+    <Description>BIM Cost for Revit</Description>
     <Assembly>Speckle.Connectors.Revit2027\Speckle.Connectors.Revit2027.dll</Assembly>
     <FullClassName>Speckle.Connectors.Revit.Plugin.RevitExternalApplication</FullClassName>
-    <ClientId>27ccff2c-011c-4374-bb79-b93990d0c86a</ClientId>
-    <VendorId>speckle</VendorId>
-    <VendorDescription>Speckle: Empowering your design and construction data. For any problems, visit our community forum https://speckle.community</VendorDescription>
+    <ClientId>8ae12a74-b713-4fe8-8183-8d10099a88ef</ClientId>
+    <VendorId>blackbirdindustries</VendorId>
+    <VendorDescription>BIM Cost by Blackbird Industries &#8212; BIM quantity takeoff and cost estimation.</VendorDescription>
   </AddIn>
 </RevitAddIns>

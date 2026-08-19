@@ -20,8 +20,8 @@ public static class Connector
     }
   }
 
-  public static readonly string TabName = "Speckle";
-  public static readonly string TabTitle = "Speckle";
+  public static readonly string TabName = "BIM Cost";
+  public static readonly string TabTitle = "BIM Cost";
 
   public static IDisposable Initialize(
     this IServiceCollection serviceCollection,
@@ -46,28 +46,11 @@ public static class Connector
       new SpeckleTracing(Console: false),
       new SpeckleMetrics(Console: false)
 #else
-      new SpeckleLogging(
-        Console: true,
-        File: new(),
-        Otel:
-        [
-          new(
-            Endpoint: new Uri("https://seq.speckle.systems/ingest/otlp/v1/logs"),
-            Headers: new() { { "X-Seq-ApiKey", "Y0Ya2CFVt1tCSgrbY07c" } }
-          ),
-        ],
-        MinimumLevel: SpeckleLogLevel.Information
-      ),
-      new SpeckleTracing(
-        Console: false,
-        Otel:
-        [
-          new(
-            Endpoint: new Uri("https://seq.speckle.systems/ingest/otlp/v1/traces"),
-            Headers: new() { { "X-Seq-ApiKey", "Y0Ya2CFVt1tCSgrbY07c" } }
-          ),
-        ]
-      ),
+      // Telemetry export removed for BIM Cost builds: the upstream Release path
+      // shipped logs and traces to a third-party endpoint with a hardcoded key.
+      // Local console and file logging are kept.
+      new SpeckleLogging(Console: true, File: new(), MinimumLevel: SpeckleLogLevel.Information),
+      new SpeckleTracing(Console: false),
       null
 #endif
     );

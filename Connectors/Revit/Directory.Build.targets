@@ -14,6 +14,27 @@
     Name="AfterBuildRevit"
     Condition="'$(RevitVersion)' != '' And '$(ContinuousIntegrationBuild)' != 'true' And '$(OS)' == 'Windows_NT'"
   >
+    <!--
+      Stage the BIM Cost panel UI into $(TargetDir)\ui so the copy below carries it into the
+      Revit Addins folder. RevitControlWebView serves that folder over a WebView2 virtual host.
+      Produced by `yarn generate` in the sibling speckle-connectors-dui repo.
+    -->
+    <PropertyGroup>
+      <BimCostUiSource>$(MSBuildThisFileDirectory)..\..\..\speckle-connectors-dui\.output\public</BimCostUiSource>
+    </PropertyGroup>
+    <Warning
+      Condition="!Exists('$(BimCostUiSource)')"
+      Text="BIM Cost UI not found at $(BimCostUiSource). Run `yarn generate` in speckle-connectors-dui, or point SPECKLE_DUI_URL at a hosted UI."
+    />
+    <ItemGroup Condition="Exists('$(BimCostUiSource)')">
+      <BimCostUiFiles Include="$(BimCostUiSource)\**\*.*" />
+    </ItemGroup>
+    <Copy
+      Condition="Exists('$(BimCostUiSource)')"
+      DestinationFolder="$(TargetDir)\ui\%(RecursiveDir)"
+      SourceFiles="@(BimCostUiFiles)"
+    />
+
     <ItemGroup>
       <RevitDLLs Include="$(TargetDir)\**\*.*" Exclude="$(TargetDir)*.addin" />
       <SourceManifest Include="$(TargetDir)\Plugin\Speckle.Connectors.Revit$(RevitVersion).addin" />
