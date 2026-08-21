@@ -118,10 +118,41 @@ one fails to load. Never take upstream's values in a merge.
 has it removed. Check this after every upstream merge.
 
 **The debranding boundary.** Remove *visual* Speckle references — names, logos, docs links,
-promo blocks, the update checker. Keep *functional* ones: the account flow still
-authenticates against `app.speckle.systems`, and adding an account still downloads Speckle's
-Desktop Service. Those cannot go without replacing the backend, and breaking them breaks
-sign-in. Do not "fix" them.
+promo blocks, the update checker. Keep *functional* ones: adding an account still downloads
+Speckle's Desktop Service, and `GetDefaultSpeckleServerUrl()` still falls back to
+`app.speckle.systems`. Breaking those breaks sign-in. Do not "fix" them.
+
+## Which server the plugin actually talks to
+
+**Production publishes go to Blackbird's own server**, not Speckle's:
+`https://bimcost.blackbirdindustries.com.au` — "Blackbird BIM Cost — Model Hub". It reports
+version `2.31.14` but speaks the **v3 API** (`project` resolves, `stream` does not), so the
+connector is API-compatible with it. The Speckle URL in the config is only a default that
+the account overrides.
+
+That server is a separate codebase in a separate environment, and it is where publish
+failures usually live. Before blaming the connector, probe it:
+
+```bash
+curl -s -X POST -H "Content-Type: application/json" \
+  -d '{"query":"{ serverInfo { version name } }"}' \
+  https://bimcost.blackbirdindustries.com.au/graphql
+curl -s https://bimcost.blackbirdindustries.com.au/api/v1/data-module-enabled   # 404 = expected
+```
+
+It does **not** implement the model-ingestion API (`canCreateModelIngestion` is absent) nor
+`/api/v1/data-module-enabled`, so `SendOperation` correctly degrades to
+`SendViaVersionCreate`. Both of those are working fallbacks, not faults.
+
+Which objects get uploaded is decided by the server's `POST /api/diff/{projectId}` response,
+not by a local cache — so a retry after a partial publish re-offers exactly what the server
+is missing. `SendConversionCache` is an in-memory `Dictionary` that dies with the Revit
+process; the per-project SQLite file under `%AppData%\Speckle\Projects\` is the SDK's object
+store, not an upload ledger.
+
+Upload concurrency (measured at 4 in-flight batches) lives in the `Speckle.Sdk` NuGet
+package, not in this repo. There is no connector-side knob to serialise uploads without
+forking the SDK — so server-side write paths must tolerate concurrent idempotent inserts.
 
 **Multi-line edits.** Escaping through `bash -c "node -e ..."` has failed repeatedly on
 backslashes and quotes; write the script to a file and run it. Several source files are
